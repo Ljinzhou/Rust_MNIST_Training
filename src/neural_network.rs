@@ -19,8 +19,6 @@ pub struct NeuralNetwork {
     pub b2: Array2<f32>,
 
     // 反向传播所需的缓存
-    // 注意：如果在保存模型时如果不希望保存中间状态，可以添加 #[serde(skip)]
-    // 但为了简单和可能的继续训练，这里允许序列化
     z1: Option<Array2<f32>>,
     a1: Option<Array2<f32>>,
     z2: Option<Array2<f32>>,
@@ -171,5 +169,31 @@ impl NeuralNetwork {
         let model: NeuralNetwork = serde_json::from_reader(reader).expect("解析模型 JSON 失败");
         println!("模型已从: {} 加载", path);
         model
+    }
+
+    /// 接受一个扁平化的输入向量 (Vec<f32>)，返回每个类别的概率 (Vec<f32>)
+    pub fn predict_probabilities(&mut self, input: &Vec<f32>) -> Vec<f32> {
+        // 将 Vec<f32> 转换为 Array2<f32> [1, 784]
+        let x = ndarray::Array2::from_shape_vec((1, self.input_size), input.clone())
+            .expect("输入数据形状错误");
+
+        // 前向传播
+        let output = self.forward(&x);
+
+        // 转换为 Vec<f32> 返回
+        output.into_raw_vec_and_offset().0
+    }
+
+    /// 接受一个扁平化的输入向量，返回概率最大的类别索引
+    pub fn predict_class(&mut self, input: &Vec<f32>) -> usize {
+        let probs = self.predict_probabilities(input);
+
+        // 找到最大值的索引
+        probs
+            .iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .map(|(index, _)| index)
+            .unwrap()
     }
 }

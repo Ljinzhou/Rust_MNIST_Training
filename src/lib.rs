@@ -62,18 +62,10 @@ pub fn load_mnist_data(images_path: &str, labels_path: &str) -> (Array2<f32>, Ar
 }
 
 // 将标签转换为 One-Hot 编码
-// 输入: labels [N] (Array1<u8>)
-// 输出: one_hot [N, 10] (Array2<f32>)
 pub fn one_hot_encode(labels: &Array1<u8>, num_classes: usize) -> Array2<f32> {
     // 初始化矩阵
-    // 使用 ndarray::Array2::zeros 创建一个二维矩阵。
-    // 形状 (shape) 为：(样本数量, 10)。
-    // 初始值全为 0.0
     let mut one_hot = Array2::zeros((labels.len(), num_classes)); // [N, 10]
     // 置热点 (Hot bit)
-    // one_hot[[行, 列]] = 1.0
-    // 行 (i): 第 i 个样本。
-    // 列 (label): 如果标签是 5，就将第 5 列设为 1.0，其余列保持 0.0。
     for (i, &label) in labels.iter().enumerate() {
         one_hot[[i, label as usize]] = 1.0;
     }

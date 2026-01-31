@@ -26,7 +26,7 @@ fn main() {
     println!("模型初始化完毕！");
 
     // 训练模型
-    let epochs = 5; // 训练轮数
+    let epochs = 100; // 训练轮数
     let batch_size = 64; // 批处理大小
     let num_samples = x_train.shape()[0]; // 样本总数
     let num_batches = num_samples / batch_size; // 批次数
@@ -37,6 +37,8 @@ fn main() {
     println!("开始训练模型...");
 
     use indicatif::{ProgressBar, ProgressStyle};
+
+    let mut prev_loss = f32::MAX;
 
     for epoch in 1..=epochs {
         // 打乱索引
@@ -78,11 +80,15 @@ fn main() {
             pb.set_message(format!("{:.4}", loss));
         }
 
-        pb.finish_with_message(format!(
-            "第 {} 轮完成，平均损失: {:.4}",
-            epoch,
-            epochs_loss / num_batches as f32
-        ));
+        let avg_loss = epochs_loss / num_batches as f32;
+        pb.finish_with_message(format!("第 {} 轮完成，平均损失: {:.4}", epoch, avg_loss));
+
+        // 检查 Loss 变化是否收敛
+        if (prev_loss - avg_loss).abs() < 0.001 {
+            println!("在第 {} 轮训练后loss已无明显变化，训练结束！", epoch);
+            break;
+        }
+        prev_loss = avg_loss;
     }
 
     model.save_model("model.json");
